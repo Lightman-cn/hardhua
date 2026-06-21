@@ -1,24 +1,2 @@
-# =============================================================
-# 硬话软说 · Cloudflare Pages 部署配置
-# =============================================================
-
-[build]
-  command = "npm run build"
-  destination = ".next"
-
-# 让 Pages Functions 能用 Node.js API(D1 绑定等)
-compatibility_flags = ["nodejs_compat"]
-compatibility_date = "2024-09-23"
-
-# 在 Cloudflare Dashboard 里需要绑定:
-# 1. D1 database: 变量名 DB
-# 2. KV namespace: 变量名 KV (用于限流)
-# 3. Secrets (加密): DOUBAO_API_KEY 或 SILICON_API_KEY
-
-# Pages Functions 自动从 wrangler.toml 读取 bindings
-# 但 Pages 的 bindings 需要在 Dashboard 里配(没找到 CLI 入口)
-# 所以下面这部分的等价操作在 Dashboard
-
-[[kv_namespaces]]
-# binding = "KV"
-# id = "xxx"  ← 创建后填这里
+name = "hardhua"
+pages_build_output_dir = ".next"

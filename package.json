@@ -5,14 +5,15 @@
   "description": "硬话软说 — 职场嘴替 AI",
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'static site'",
+    "build": "next build",
     "deploy": "vercel --prod"
   },
   "dependencies": {
     "next": "14.2.5"
   },
   "devDependencies": {
-    "@types/node": "20.14.0",
-    "typescript": "5.5.0"
+    "@types/node": "26.0.0",
+    "@types/react": "19.2.17",
+    "typescript": "6.0.3"
   }
 }
