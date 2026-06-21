@@ -1,2 +1,6 @@
 name = "hardhua"
 pages_build_output_dir = ".next"
+
+[vars]
+# 让 Cloudflare Pages 也安装 devDependencies（Next.js 需要 TypeScript）
+npm_config_omit = "dev"
