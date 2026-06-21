@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vercel dev",
     "build": "next build",
-    "deploy": "vercel --prod"
+    "deploy": "vercel --prod",
+    "postbuild": "cp -r functions out/"
   },
   "dependencies": {
     "next": "^14.2.35",
