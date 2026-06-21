@@ -42,6 +42,9 @@ export default function Home() {
   const [recording, setRecording] = useState(false)
   const [quota, setQuota] = useState<{used: number, limit: number} | null>(null)
   const [errMsg, setErrMsg] = useState<string | null>(null)
+  const [recordId, setRecordId] = useState<number | null>(null)
+  const [rating, setRating] = useState(0)
+  const [rated, setRated] = useState(false)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
 
@@ -82,6 +85,7 @@ export default function Home() {
       setHardText(data.transcript || '')
       setSoftText(data.reply || '')
       if (data.quota) setQuota(data.quota)
+      if (data.id) setRecordId(data.id)
     } catch (e: any) {
       setErrMsg(e.message || '出错了,稍后再试')
     } finally {
@@ -91,7 +95,7 @@ export default function Home() {
 
   async function translate() {
     if (!hardText.trim()) return
-    setLoading(true); setErrMsg(null)
+    setLoading(true); setErrMsg(null); setRated(false); setRating(0)
     try {
       const res = await fetch('/api/translate', {
         method: 'POST',
@@ -102,6 +106,7 @@ export default function Home() {
       if (!res.ok) throw new Error(data.error || '请求失败')
       setSoftText(data.reply || '')
       if (data.quota) setQuota(data.quota)
+      if (data.id) setRecordId(data.id)
     } catch (e: any) {
       setErrMsg(e.message || '出错了,稍后再试')
     } finally {
@@ -109,9 +114,24 @@ export default function Home() {
     }
   }
 
+  async function submitRating(r: number) {
+    if (!recordId || rated) return
+    setRating(r)
+    try {
+      await fetch('/api/translate', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: recordId, rating: r })
+      })
+      setRated(true)
+    } catch (e) {
+      // 静默失败,用户不需要知道
+    }
+  }
+
   function loadExample(s: typeof SCENES[number]) {
     setScene(s.id)
-    setHardText(''); setSoftText('')
+    setHardText(''); setSoftText(''); setRating(0); setRated(false); setRecordId(null)
     const ex: Record<string, string> = {
       boss: '我 tm 加班到 11 点,周一早会他当着全组说"上周那个方案是 XX 主导的,我只是给点建议"。要点脸吗?',
       colleague: '数据出问题明明是他给的源表错了,他在群里@我说"麻烦 XX 把数据再核对一下哈",意思让我背锅?',
@@ -222,6 +242,28 @@ export default function Home() {
                 disabled={!softText}
               >📋 复制</button>
             </div>
+
+            {/* 评分交互 */}
+            {softText && recordId && !rated && (
+              <div className="rating">
+                <span className="rating-label">这个翻译贴不贴?</span>
+                <div className="stars">
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <button
+                      key={n}
+                      className={`star ${n <= rating ? 'active' : ''}`}
+                      onClick={() => submitRating(n)}
+                      aria-label={`${n} 星`}
+                    >★</button>
+                  ))}
+                </div>
+                <span className="rating-hint">评分帮 AI 学得更懂你</span>
+              </div>
+            )}
+            {rated && (
+              <div className="rating-thanks">谢谢评分!这会让下一个翻译更精准 ✨</div>
+            )}
+
             {loading && !softText && (
               <div className="result loading">
                 <span className="typing-dot"></span>
@@ -301,7 +343,7 @@ export default function Home() {
           <div className="step">
             <div className="step-num">01</div>
             <h4>选场景</h4>
-            <p>领导/同事/客户/HR,选个最贴近你心塞的那个分类。</p>
+            <p>领导/同事/客户/HR,选个最贴你心塞的分类。</p>
           </div>
           <div className="step">
             <div className="step-num">02</div>
@@ -315,8 +357,8 @@ export default function Home() {
           </div>
           <div className="step">
             <div className="step-num">04</div>
-            <h4>直接用</h4>
-            <p>复制粘贴,微信、邮件、钉钉、飞书,哪儿都能用。</p>
+            <h4>评分 + 直接用</h4>
+            <p>给翻译打分帮 AI 学,再一键复制粘贴去用。</p>
           </div>
         </div>
       </section>
@@ -339,6 +381,26 @@ export default function Home() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* 数据飞轮说明 */}
+      <section className="wheel">
+        <div className="wheel-head">
+          <div className="kicker">为什么越来越准</div>
+          <h2>数据飞轮</h2>
+        </div>
+        <div className="wheel-flow">
+          <div className="wheel-node">你吐槽</div>
+          <div className="wheel-arrow">→</div>
+          <div className="wheel-node highlight">AI 翻译</div>
+          <div className="wheel-arrow">→</div>
+          <div className="wheel-node">你评分</div>
+          <div className="wheel-arrow">→</div>
+          <div className="wheel-node highlight">语料沉淀</div>
+          <div className="wheel-arrow">→</div>
+          <div className="wheel-node">下次更准</div>
+        </div>
+        <p className="wheel-note">每一条吐槽 + 评分,都在帮下一个职场人翻译得更体面。</p>
       </section>
 
       {/* CTA */}
