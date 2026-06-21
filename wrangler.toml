@@ -1,2 +1,12 @@
 name = "hardhua"
 pages_build_output_dir = ".next"
+compatibility_date = "2024-09-23"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "hardhua-db"
+database_id = "7da278f0-ff08-4e98-aff3-534aa1ff8d4c"
+
+[[kv_namespaces]]
+binding = "KV"
+id = "68c880a74c3c4ce7a3f6cd86fa43368e"
