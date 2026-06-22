@@ -15,20 +15,27 @@ const SCENE_HINT = {
   general: '通用职场对话,翻译成得体、专业、不情绪化的成年人口吻'
 }
 
-const SYSTEM_PROMPT = `你是一个"职场翻译官",把用户的情绪化吐槽翻译成得体、专业、不卑不亢的对外发言。
+const SYSTEM_PROMPT = `你是一个顶级职场沟通顾问,专治"嘴比脑子快"。
 
-【场景上下文】{SCENE_HINT}
+【你的工作方式】
+1. 先读懂用户真正想表达什么(表面文字下的真实诉求)
+2. 再判断这句话发出去会让对方有什么感受
+3. 最后给出一个既保留立场、又让对方好下台的回复
+
+【场景上下文】
+{SCENE_HINT}
 
 【翻译原则】
-1. 保留用户的真实诉求和立场(不能让用户吃亏)
-2. 剥离脏话、攻击性、人身攻击
-3. 包装成"就事论事"、"有理有据"、"给对方台阶"的成年人对话
-4. 不卑不亢:不卑微讨好,也不阴阳怪气
-5. 长度:100-200 字,简洁有力
-6. 直接给出回复正文,不要任何解释、标题、引用符号
-7. 如果吐槽里涉及具体的名字、公司、商业秘密,主动脱敏为"XX"或"对方"
+1. 保留用户的核心立场——绝不能让用户吃亏或显得弱势
+2. 剥离脏话和人身攻击,但保留情绪的"火候"(不能太假)
+3. 翻译后的语气要像一个冷静、有筹码、有底气的成年人,不是在讨好谁
+4. 如果对方有错,要让对方意识到但不撕破脸;如果用户有诉求,要理直气壮地提
+5. 字数:80-150字,简洁有力,不啰嗦
+6. 直接输出翻译后的回复正文,不要任何前言后语、标签、引用符号
+7. 吐槽里涉及人名/公司名/具体金额的,主动脱敏为"领导"、"对方"、"XX"
 
-【输出】只输出翻译后的回复正文,不要任何前言后语。`
+【输出格式】
+只输出翻译后的正文一句话,不要解释。`
 
 // ---------------- 限流(基于 KV,跨实例持久)----------------
 async function checkRateLimit(env, clientId, limit = 50) {
@@ -87,45 +94,25 @@ function sanitize(text) {
   return { blocked: false, cleaned }
 }
 
-// ---------------- AI 调用(支持多厂商)----------------
+// ---------------- AI 调用(MiniMax)----------------
 async function callAI(env, systemPrompt, userText) {
   const start = Date.now()
-  const provider = env.AI_PROVIDER || 'doubao' // doubao | silicon | openai
+  const apiKey = env.MINIMAX_API_KEY
+  const model = 'MiniMax-Text-01'
 
-  let endpoint, apiKey, model, body
+  if (!apiKey) throw new Error('MINIMAX_API_KEY not configured')
 
-  if (provider === 'silicon') {
-    endpoint = env.SILICON_ENDPOINT || 'https://api.siliconflow.cn/v1/chat/completions'
-    apiKey = env.SILICON_API_KEY
-    model = env.SILICON_MODEL || 'Qwen/Qwen2.5-7B-Instruct'
-    body = {
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userText }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
-    }
-  } else {
-    // doubao (火山方舟)
-    endpoint = env.DOUBAO_ENDPOINT || 'https://ark.cn-beijing.volces.com/api/v3/chat/completions'
-    apiKey = env.DOUBAO_API_KEY
-    model = env.DOUBAO_MODEL || 'doubao-lite-32k'
-    body = {
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userText }
-      ],
-      temperature: 0.7,
-      max_tokens: 500
-    }
+  const body = {
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userText }
+    ],
+    temperature: 0.6,
+    max_tokens: 600
   }
 
-  if (!apiKey) throw new Error('AI_API_KEY not configured')
-
-  const res = await fetch(endpoint, {
+  const res = await fetch('https://api.minimax.chat/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -136,7 +123,7 @@ async function callAI(env, systemPrompt, userText) {
 
   if (!res.ok) {
     const t = await res.text().catch(() => '')
-    throw new Error(`${provider} ${res.status}: ${t.slice(0, 200)}`)
+    throw new Error(`MiniMax ${res.status}: ${t.slice(0, 200)}`)
   }
   const data = await res.json()
   const reply = data?.choices?.[0]?.message?.content?.trim() || ''
@@ -239,7 +226,7 @@ export async function onRequestPost(context) {
     let reply, model = 'mock', latencyMs = 0, isMock = 1
 
     try {
-      if (env.DOUBAO_API_KEY || env.SILICON_API_KEY) {
+      if (env.MINIMAX_API_KEY) {
         const ai = await callAI(env, systemPrompt, safety.cleaned)
         reply = ai.reply
         model = ai.model
@@ -247,6 +234,7 @@ export async function onRequestPost(context) {
         isMock = 0
       } else {
         reply = getMockReply(safety.cleaned, scene)
+        model = 'mock'
         latencyMs = 0
       }
     } catch (e) {
