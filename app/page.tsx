@@ -13,6 +13,12 @@ const SCENES = [
   { id: 'general', label: '随便聊聊', hint: '不想分类,先把情绪倒出来' }
 ]
 
+// 梗图库 - 点击可轮播
+const MEMES = [
+  { src: '/memes/opossum-1.png', hint: '表面云淡风轻，内心尼玛成群' },
+  { src: '/memes/opossum-2.png', hint: '职场嘴替，AI 帮你体面' },
+]
+
 const CASES = [
   {
     scene: '霸道领导',
@@ -45,6 +51,7 @@ export default function Home() {
   const [recordId, setRecordId] = useState<number | null>(null)
   const [rating, setRating] = useState(0)
   const [rated, setRated] = useState(false)
+  const [memeIdx, setMemeIdx] = useState(0)
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
 
@@ -369,17 +376,33 @@ export default function Home() {
           <h2>看看<span style={{color: 'var(--hard-accent)'}}>硬话</span>怎么变<span style={{color: 'var(--soft-accent)'}}>软话</span></h2>
           <p>真实场景示例,左侧是你心里想的,右侧是 AI 给你的。</p>
         </div>
-        <div className="case-grid">
-          {CASES.map((c, i) => (
-            <div key={i} className="case">
-              <div className="case-hard">{c.hard}</div>
-              <div className="arrow">→</div>
-              <div>
-                <div className="case-soft">{c.soft}</div>
-                <div className="case-meta">{c.scene} · {c.meta}</div>
+        <div className="case-layout">
+          <div className="case-grid">
+            {CASES.map((c, i) => (
+              <div key={i} className="case">
+                <div className="case-hard">{c.hard}</div>
+                <div className="arrow">→</div>
+                <div>
+                  <div className="case-soft">{c.soft}</div>
+                  <div className="case-meta">{c.scene} · {c.meta}</div>
+                </div>
               </div>
+            ))}
+          </div>
+
+          {/* 梗图轮播区 */}
+          <div className="meme-carousel">
+            <div className="meme-card" onClick={() => setMemeIdx(i => (i + 1) % MEMES.length)} title="点击换一张">
+              <img src={MEMES[memeIdx].src} alt={MEMES[memeIdx].hint} />
+              <div className="meme-hint">{MEMES[memeIdx].hint}</div>
             </div>
-          ))}
+            <div className="meme-dots">
+              {MEMES.map((_, i) => (
+                <span key={i} className={`meme-dot ${i === memeIdx ? 'active' : ''}`} />
+              ))}
+            </div>
+            <div className="meme-tip">点击图片换一张 🫡</div>
+          </div>
         </div>
       </section>
 
