@@ -24,12 +24,9 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Deploy to Cloudflare Pages (production)
-        uses: cloudflare/pages-action@v1
+      - name: Deploy via wrangler
+        uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: hardhua
-          directory: out
-          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
-          productionDeployment: true
+          command: pages deploy out --project-name=hardhua --yes
