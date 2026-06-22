@@ -24,9 +24,9 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Deploy via Wrangler
+      - name: Deploy to Cloudflare Pages (production)
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy out --project-name=hardhua
+          command: pages deploy out --project-name=hardhua --prod
