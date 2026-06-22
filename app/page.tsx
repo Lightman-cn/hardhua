@@ -15,8 +15,14 @@ const SCENES = [
 
 // 梗图库 - 点击可轮播
 const MEMES = [
-  { src: '/memes/opossum-1.png', hint: '表面云淡风轻，内心尼玛成群' },
-  { src: '/memes/opossum-2.png', hint: '职场嘴替，AI 帮你体面' },
+  { src: '/memes/meme-01.png', hint: '领导卖力画饼，而我只想减肥' },
+  { src: '/memes/meme-02.png', hint: '会开完了，但问题没解决' },
+  { src: '/memes/meme-03.png', hint: '表面云淡风轻，内心尼玛成群' },
+  { src: '/memes/meme-04.png', hint: '拿着卖白菜的钱，操着卖白粉的心' },
+  { src: '/memes/meme-05.png', hint: '同事两大爱好：甩锅和抢功' },
+  { src: '/memes/meme-06.png', hint: '我想骂人，但我忍住了' },
+  { src: '/memes/meme-07.png', hint: '客户虐我千百遍，我待客户如初恋' },
+  { src: '/memes/meme-08.png', hint: '客户报低价，我还不能说贵' },
 ]
 
 const CASES = [
