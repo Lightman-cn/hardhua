@@ -58,31 +58,43 @@ export default function Home() {
   const [rating, setRating] = useState(0)
   const [rated, setRated] = useState(false)
   const [memeIdx, setMemeIdx] = useState(0)
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
-  const chunksRef = useRef<Blob[]>([])
+  const [memeAnimating, setMemeAnimating] = useState(false)
+  const speechRef = useRef<any>(null)
 
-  async function startRecord() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mr = new MediaRecorder(stream)
-      mediaRecorderRef.current = mr
-      chunksRef.current = []
-      mr.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data) }
-      mr.onstop = async () => {
-        stream.getTracks().forEach(t => t.stop())
-        const blob = new Blob(chunksRef.current, { type: 'audio/webm' })
-        await sendAudio(blob)
-      }
-      mr.start()
-      setRecording(true)
-    } catch (e) {
-      setErrMsg('需要麦克风权限,或者直接打字也行~')
+  function startVoice() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    if (!SR) {
+      setErrMsg('你的浏览器不支持语音录入，换 Chrome 试试~')
       setTimeout(() => setErrMsg(null), 4000)
+      return
     }
+    const r = new SR()
+    speechRef.current = r
+    r.lang = 'zh-CN'
+    r.continuous = false
+    r.interimResults = true
+    r.onresult = (e: any) => {
+      const transcript = Array.from(e.results)
+        .map((t: any) => t[0].transcript)
+        .join('')
+      setHardText(transcript)
+    }
+    r.onerror = () => {
+      setRecording(false)
+    }
+    r.onend = () => {
+      setRecording(false)
+      // 用最终识别结果触发翻译
+      if (hardText.trim()) {
+        setTimeout(() => translate(), 100)
+      }
+    }
+    r.start()
+    setRecording(true)
   }
 
-  function stopRecord() {
-    mediaRecorderRef.current?.stop()
+  function stopVoice() {
+    speechRef.current?.stop()
     setRecording(false)
   }
 
@@ -219,11 +231,11 @@ export default function Home() {
             />
             <div className="toolbar">
               {!recording ? (
-                <button className="rec-btn" onClick={startRecord} title="录音">
+                <button className="rec-btn" onClick={startVoice} title="语音录入">
                   <svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11h-2a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11z"/></svg>
                 </button>
               ) : (
-                <button className="rec-btn recording" onClick={stopRecord} title="停止">
+                <button className="rec-btn recording" onClick={stopVoice} title="停止">
                   <svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
                 </button>
               )}
@@ -398,8 +410,13 @@ export default function Home() {
 
           {/* 梗图轮播区 */}
           <div className="meme-carousel">
-            <div className="meme-card" onClick={() => setMemeIdx(i => (i + 1) % MEMES.length)} title="点击换一张">
-              <img src={MEMES[memeIdx].src} alt="梗图" />
+            <div className="meme-gallery" onClick={() => setMemeIdx(i => (i + 1) % MEMES.length)} title="点击换下一张">
+              <div className="meme-track" style={{ transform: `translateX(-${memeIdx * 100}%)` }}>
+                {MEMES.map((m, i) => (
+                  <img key={i} src={m.src} alt="梗图" className="meme-img" />
+                ))}
+              </div>
+              <div className="meme-counter">{memeIdx + 1} / {MEMES.length}</div>
             </div>
             <div className="meme-dots">
               {MEMES.map((_, i) => (

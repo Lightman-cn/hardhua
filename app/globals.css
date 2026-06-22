@@ -368,37 +368,41 @@ textarea {
   align-items: center;
   gap: 12px;
 }
-.meme-card {
+.meme-gallery {
   width: 100%;
   border-radius: 16px;
   overflow: hidden;
   cursor: pointer;
   box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: box-shadow 0.2s;
   position: relative;
 }
-.meme-card:hover {
-  transform: translateY(-2px);
+.meme-gallery:hover {
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
 }
-.meme-card:active {
-  transform: translateY(0);
+.meme-gallery:active {
+  transform: scale(0.98);
 }
-.meme-card img {
+.meme-track {
+  display: flex;
+  transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.meme-img {
   width: 100%;
+  flex-shrink: 0;
   height: auto;
   display: block;
 }
-.meme-hint {
+.meme-counter {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 10px 14px;
-  background: linear-gradient(transparent, rgba(0,0,0,0.75));
+  bottom: 12px;
+  right: 12px;
+  background: rgba(0,0,0,0.5);
   color: white;
-  font-size: 12px;
-  text-align: center;
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
 }
 .meme-dots {
   display: flex;
