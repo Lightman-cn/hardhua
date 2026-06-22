@@ -399,8 +399,7 @@ export default function Home() {
           {/* 梗图轮播区 */}
           <div className="meme-carousel">
             <div className="meme-card" onClick={() => setMemeIdx(i => (i + 1) % MEMES.length)} title="点击换一张">
-              <img src={MEMES[memeIdx].src} alt={MEMES[memeIdx].hint} />
-              <div className="meme-hint">{MEMES[memeIdx].hint}</div>
+              <img src={MEMES[memeIdx].src} alt="梗图" />
             </div>
             <div className="meme-dots">
               {MEMES.map((_, i) => (
