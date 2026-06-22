@@ -16,17 +16,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Install deps and build
+        run: |
+          npm ci
+          npm run build
 
-      - name: Build
-        run: npm run build
-
-      - name: Deploy via wrangler
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy out --project-name=hardhua --yes
+      - name: Deploy with wrangler
+        run: |
+          npm install -g wrangler
+          npx wrangler pages deploy out \
+            --project-name=hardhua \
+            --account-id=3eca141ef64baf04459e0deaf999da17
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
