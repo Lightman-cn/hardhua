@@ -24,37 +24,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Install Wrangler
-        run: npm install -g wrangler
-
-      - name: Deploy to Cloudflare Pages
-        run: |
-          npx wrangler pages deploy out \
-            --project-name=hardhua \
-            --account-id=3eca141ef64baf04459e0deaf999da17
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-
-      - name: Promote latest deployment to production
-        run: |
-          echo "Fetching latest deployment..."
-          DEPLOYMENT_ID=$(npx wrangler pages deployment list \
-            --project-name=hardhua \
-            --account-id=3eca141ef64baf04459e0deaf999da17 \
-            --json 2>/dev/null | python3 -c "
-import sys,json
-d=json.load(sys.stdin)
-for dep in d.get('result',[]):
-    if dep.get('id'):
-        print(dep['id'])
-        break
-")
-          echo "Deployment ID: $DEPLOYMENT_ID"
-          if [ -n "$DEPLOYMENT_ID" ]; then
-            npx wrangler pages deployment promote \
-              --project-name=hardhua \
-              --account-id=3eca141ef64baf04459e0deaf999da17 \
-              --deployment-id="$DEPLOYMENT_ID"
-          fi
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Deploy to Cloudflare Pages (production)
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: hardhua
+          directory: out
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          productionDeployment: true
