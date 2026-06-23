@@ -1,75 +1,77 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import './animations.css'
+import './globals.css'
 
+// 规格要求的5个场景
 const SCENES = [
-  { id: 'boss', label: '霸道领导', hint: '领导让你无偿加班、抢功、PUA' },
-  { id: 'colleague', label: '甩锅同事', hint: '同事把活推给你、抢你功劳' },
-  { id: 'client', label: '异想天开客户', hint: '客户需求反复、预算离谱、临时加塞' },
-  { id: 'hr', label: 'HR 谈辞退', hint: 'HR 用话术逼你主动离职' },
-  { id: 'promotion', label: '晋升答辩', hint: '向领导汇报争取升职加薪' },
-  { id: 'salary', label: '谈薪水', hint: '面对 offer 谈判、涨薪请求' },
-  { id: 'partner', label: '难缠合作方', hint: '合作方拖延、扯皮、推卸' },
-  { id: 'general', label: '随便聊聊', hint: '不想分类,先把情绪倒出来' }
-]
-
-const MEMES = [
-  { src: '/memes/meme-01.png', hint: '领导卖力画饼，而我只想减肥' },
-  { src: '/memes/meme-02.png', hint: '会开完了，但问题没解决' },
-  { src: '/memes/meme-03.png', hint: '表面云淡风轻，内心尼玛成群' },
-  { src: '/memes/meme-04.png', hint: '拿着卖白菜的钱，操着卖白粉的心' },
-  { src: '/memes/meme-05.png', hint: '同事两大爱好：甩锅和抢功' },
-  { src: '/memes/meme-06.png', hint: '我想骂人，但我忍住了' },
-  { src: '/memes/meme-07.png', hint: '客户虐我千百遍，我待客户如初恋' },
-  { src: '/memes/meme-08.png', hint: '客户报低价，我还不能说贵' },
+  { id: 'boss', label: '💬 领导', hint: '布置任务不合理/加班太多/功劳被抢' },
+  { id: 'colleague', label: '🤝 同事', hint: '同事甩锅/蹭资源/背后说坏话' },
+  { id: 'client', label: '💼 客户', hint: '反复改需求/预算砍一半还催交期' },
+  { id: 'promotion', label: '📈 晋升/加薪', hint: '年终评定不公平/晋升被拒' },
+  { id: 'resign', label: '🚪 离职/交接', hint: '想辞职不知怎么开口/交接时撕破脸' },
 ]
 
 const CASES = [
   {
-    scene: '霸道领导',
-    hard: '我 tm 加班到 11 点,周一早会他当着全组说"上周那个方案是 XX 主导的,我只是给点建议"。要点脸吗?',
-    soft: '王总,关于上周那个方案,我整理了下完整的过程文档(附件),可以更清楚地看到从需求拆解到落地的每个关键节点,后面类似项目我也准备同步给您过目。',
-    meta: '— 让领导知道你功劳清清楚楚,但不撕破脸'
+    scene: '领导场景',
+    hard: '领导天天加班到10点，周末也不放过，还觉得理所应当，真把自己当狼性文化了。',
+    soft: '我理解你希望工作和生活能够平衡。其实我一直很佩服你对工作的投入，也希望能跟上这个节奏。不过最近连续的高强度工作让我有点吃力，能不能我们找个时间聊聊，看能不能调整一下工作方式，在保证质量的前提下，让我也能有一些休息和充电的时间？',
+    tag: '准时下班了 🎉'
   },
   {
-    scene: '甩锅同事',
-    hard: '数据出问题明明是他给的源表错了,他在群里@我说"麻烦 XX 把数据再核对一下哈",意思让我背锅?',
-    soft: '我看了下原始数据,源表里这个字段的口径和我们用的有差异(我标了截图)。我先按新的口径重新跑一遍,顺便拉个对齐文档,以后我们组统一一个版本,避免再出现这种误会。',
-    meta: '— 把锅"客观化"成流程问题,不点名但暗示清清楚楚'
+    scene: '客户场景',
+    hard: '客户反复改需求，改了七八版最后又说用第一版，我真的会谢。',
+    soft: '非常感谢你这么认真地参与需求梳理，看到你们对细节这么重视我很欣慰。我整理了下各版本的迭代记录，可以清晰看到每一版的调整点，也方便后续有据可查。我们下次评审会先对清楚「终稿标准」，避免反复，您看可以吗？',
+    tag: '客户居然道歉了 😅'
   },
   {
-    scene: '异想天开客户',
-    hard: '预算 5000 要做个淘宝+抖音+小红书三端 App,还要 AI 推荐,还要私域运营全包。我:???',
-    soft: '理解您想要全渠道触达的思路,这其实是个挺大的体系。我建议我们分两步:第一期(2周)先把核心用户路径和最关键的一个渠道跑通,验证 ROI;第二期根据数据决定要不要扩到其他渠道。这样总投入可控,效果也更可量化。您看这个节奏可以吗?',
-    meta: '— 把"不"包装成"两步走",客户觉得是策略,不是拒绝'
-  }
+    scene: '同事场景',
+    hard: '同事总让我帮他干活，做完了功劳还是他的，我真的会谢。',
+    soft: '我注意到最近我们在协作项目时，任务分工的边界有点模糊。为了后续合作更顺畅，也避免出现信息不对称，我建议下次协作时先把分工和产出标准书面确认一下，这样对大家都公平，也好追责。你觉得呢？',
+    tag: '同事再也不敢了 ✌️'
+  },
 ]
 
-// ---- 粒子效果 ----
-const CONFETTI_COLORS = ['#FF6B35', '#4ECDC4', '#FFE66D', '#FF6B6B', '#45B7D1', '#96CEB4']
-const CONFETTI_SHAPES = ['■', '●', '▲', '✦']
+const FEATURES = [
+  {
+    icon: '⚡',
+    title: '3秒翻译',
+    desc: '输入吐槽，选择场景，一键生成体面回复，AI 比你想得更周全。'
+  },
+  {
+    icon: '🎯',
+    title: '场景全覆盖',
+    desc: '领导/客户/同事/晋升/离职，职场全场景高情商话术支持。'
+  },
+  {
+    icon: '✨',
+    title: '精修打磨',
+    desc: '对结果不满意？一键重新生成，或复制后自己再调整。'
+  },
+]
 
+// 粒子效果
 function triggerConfetti(btnEl: HTMLElement) {
+  const COLORS = ['#FF6B35', '#4ECDC4', '#FFE66D', '#FF6B6B', '#45B7D1']
+  const SHAPES = ['■', '●', '▲', '✦']
   const rect = btnEl.getBoundingClientRect()
   const baseX = rect.left + rect.width / 2
-  for (let i = 0; i < 22; i++) {
+  for (let i = 0; i < 24; i++) {
     const el = document.createElement('div')
-    el.style.position = 'fixed'
-    el.style.left = (baseX + (Math.random() - 0.5) * 120) + 'px'
-    el.style.top = (rect.top + window.scrollY) + 'px'
-    el.style.zIndex = '9999'
-    el.style.pointerEvents = 'none'
+    el.className = 'confetti-particle'
+    el.style.left = (baseX + (Math.random() - 0.5) * 140) + 'px'
+    el.style.top = (rect.top + window.scrollY - 10) + 'px'
     el.style.fontSize = (Math.random() * 10 + 8) + 'px'
-    el.style.color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]
-    el.style.animation = `confettiFall ${Math.random() * 0.8 + 0.9}s cubic-bezier(0.25,0.46,0.45,0.94) forwards`
-    el.textContent = CONFETTI_SHAPES[Math.floor(Math.random() * CONFETTI_SHAPES.length)]
+    el.style.color = COLORS[Math.floor(Math.random() * COLORS.length)]
+    el.style.animationDuration = (Math.random() * 0.8 + 0.9) + 's'
+    el.textContent = SHAPES[Math.floor(Math.random() * SHAPES.length)]
     document.body.appendChild(el)
     setTimeout(() => el.remove(), 2000)
   }
 }
 
-// 打字机 hook
+// 打字机
 function useTypewriter(text: string, speed = 28) {
   const [displayed, setDisplayed] = useState('')
   const [done, setDone] = useState(false)
@@ -77,7 +79,7 @@ function useTypewriter(text: string, speed = 28) {
     if (!text) { setDisplayed(''); setDone(false); return }
     setDisplayed(''); setDone(false)
     let i = 0
-    const tick = () => {
+    const id = setTimeout(function tick() {
       if (i < text.length) {
         setDisplayed(text.slice(0, i + 1))
         i++
@@ -85,20 +87,19 @@ function useTypewriter(text: string, speed = 28) {
       } else {
         setDone(true)
       }
-    }
-    const id = setTimeout(tick, speed * 3)
+    }, speed * 3)
     return () => clearTimeout(id)
   }, [text, speed])
   return { displayed, done }
 }
 
-// 滚动入场 hook
+// 滚动入场
 function useScrollReveal() {
   useEffect(() => {
     const els = document.querySelectorAll<HTMLElement>('.scroll-reveal')
     const obs = new IntersectionObserver(
       entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('revealed') }),
-      { threshold: 0.12 }
+      { threshold: 0.1 }
     )
     els.forEach(el => obs.observe(el))
     return () => obs.disconnect()
@@ -116,9 +117,7 @@ export default function Home() {
   const [recordId, setRecordId] = useState<number | null>(null)
   const [rating, setRating] = useState(0)
   const [rated, setRated] = useState(false)
-  const [memeIdx, setMemeIdx] = useState(0)
   const [firstSuccess, setFirstSuccess] = useState(false)
-  const [copyFlash, setCopyFlash] = useState(false)
   const speechRef = useRef<any>(null)
   const translateBtnRef = useRef<HTMLButtonElement>(null)
   const { displayed: typedSoft, done: typingDone } = useTypewriter(softText)
@@ -128,10 +127,7 @@ export default function Home() {
   // 导航滚动阴影
   useEffect(() => {
     const nav = document.querySelector('.nav') as HTMLElement
-    const onScroll = () => {
-      if (window.scrollY > 20) nav?.classList.add('scrolled')
-      else nav?.classList.remove('scrolled')
-    }
+    const onScroll = () => nav?.classList.toggle('scrolled', window.scrollY > 20)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
@@ -149,8 +145,7 @@ export default function Home() {
     r.continuous = false
     r.interimResults = true
     r.onresult = (e: any) => {
-      const transcript = Array.from(e.results).map((t: any) => t[0].transcript).join('')
-      setHardText(transcript)
+      setHardText(Array.from(e.results).map((t: any) => t[0].transcript).join(''))
     }
     r.onerror = () => setRecording(false)
     r.onend = () => {
@@ -181,8 +176,8 @@ export default function Home() {
       if (!firstSuccess && data.reply) {
         setFirstSuccess(true)
         setTimeout(() => {
-          translateBtnRef.current && triggerConfetti(translateBtnRef.current)
-        }, 600)
+          if (translateBtnRef.current) triggerConfetti(translateBtnRef.current)
+        }, 500)
       }
     } catch (e: any) {
       setErrMsg(e.message || '出错了,稍后再试')
@@ -204,27 +199,15 @@ export default function Home() {
     } catch (_) {}
   }
 
-  function copyResult() {
-    navigator.clipboard.writeText(softText)
-    setCopyFlash(true)
-    setErrMsg('已复制,直接粘贴就行 ✦')
-    setTimeout(() => { setErrMsg(null); setCopyFlash(false) }, 2500)
-  }
+  const MAX_CHARS = 300
+  const charCountClass = hardText.length > MAX_CHARS ? 'danger' : hardText.length > MAX_CHARS * 0.8 ? 'warn' : ''
 
-  function loadExample(s: typeof SCENES[number]) {
-    setScene(s.id)
-    setHardText(''); setSoftText(''); setRating(0); setRated(false); setRecordId(null)
-    const ex: Record<string, string> = {
-      boss: '我 tm 加班到 11 点,周一早会他当着全组说"上周那个方案是 XX 主导的,我只是给点建议"。要点脸吗?',
-      colleague: '数据出问题明明是他给的源表错了,他在群里@我说"麻烦 XX 把数据再核对一下哈",意思让我背锅?',
-      client: '预算 5000 要做个淘宝+抖音+小红书三端 App,还要 AI 推荐,还要私域运营全包。我:???',
-      hr: 'HR 说"公司近期业务调整,你的岗位不太合适,建议你主动提离职,这样对大家都体面",我笑了。',
-      promotion: '我跟了半年的项目上线了,想跟领导聊聊升职加薪,但又怕他觉得我"太急"。',
-      salary: '对方开的薪资比预期低 30%,HR 说"这是我们能给到的最优方案了",我不知道怎么谈。',
-      partner: '合作方拖了 3 个月没付尾款,微信上问就是"在走流程",我 tm 已经在朋友圈看到他们团建了。',
-      general: ''
-    }
-    setHardText(ex[s.id] || '')
+  const exampleTexts: Record<string, string> = {
+    boss: '领导天天加班到10点，周末也不放过，还觉得理所应当，真把自己当狼性文化了。',
+    colleague: '同事总让我帮他干活，做完了功劳还是他的，我真的会谢。',
+    client: '客户反复改需求，改了七八版最后又说用第一版，我真的会谢。',
+    promotion: '年终评定不公平，领导说我"还不到时候"，但我明明产出了全组最高的业绩。',
+    resign: '想辞职但不知道怎么开口，怕领导觉得我不忠诚，也怕交接时撕破脸。',
   }
 
   return (
@@ -236,11 +219,10 @@ export default function Home() {
         </div>
         <div className="nav-links">
           <a href="#demo">试试</a>
-          <a href="#scenes">场景</a>
-          <a href="#how">怎么用</a>
+          <a href="#features">特色</a>
           <a href="#cases">案例</a>
         </div>
-        <a href="#demo" className="nav-cta">开始吐槽</a>
+        <a href="#demo" className="nav-cta">开始翻译</a>
       </nav>
 
       {/* HERO */}
@@ -248,14 +230,17 @@ export default function Home() {
         <div className="hero-hard">
           <span className="tag animate-fade-up">硬话</span>
           <h1 className="animate-fade-up delay-1">想说<span className="accent">滚</span>。<br/>憋不住。</h1>
-          <p className="animate-fade-up delay-2">工作里那些想怼不敢怼的瞬间,先来这里倒出来。<br/>脏话、吐槽、阴阳怪气,随便说。</p>
+          <p className="animate-fade-up delay-2">工作里那些想怼不敢怼的瞬间，先来这里倒出来。脏话、吐槽、阴阳怪气，随便说。</p>
           <a href="#demo" className="hero-cta animate-fade-up delay-3">把火发出来 →</a>
+          <span className="hero-star animate-fade-up delay-4" style={{right: '15%', top: '15%'}}>✦</span>
+          <span className="hero-star animate-fade-up delay-5" style={{left: '18%', top: '35%', fontSize: '18px'}}>✦</span>
         </div>
         <div className="hero-soft">
           <span className="tag animate-fade-up">软话</span>
-          <h1 className="animate-fade-up delay-1">对外,<br/>说得<span className="accent">体面</span>。</h1>
-          <p className="animate-fade-up delay-2">AI 听懂你的情绪,翻译成你该说的样子。<br/>不卑不亢,有理有面,成年人的体面。</p>
+          <h1 className="animate-fade-up delay-1">对外，<br/>说得<span className="accent">体面</span>。</h1>
+          <p className="animate-fade-up delay-2">AI 听懂你的情绪，翻译成你该说的样子。不卑不亢，有理有面，成年人的体面。</p>
           <a href="#demo" className="hero-cta animate-fade-up delay-3">看怎么翻译 →</a>
+          <span className="hero-star animate-fade-up delay-4" style={{right: '20%', bottom: '30%', fontSize: '22px'}}>✦</span>
         </div>
       </section>
 
@@ -263,29 +248,40 @@ export default function Home() {
       <section className="demo scroll-reveal" id="demo">
         <div className="demo-head animate-fade-up">
           <div className="kicker">现在就试</div>
-          <h2>左边发火,右边收场</h2>
-          <p>录音或打字,AI 帮你把"想说滚"翻译成"我保留意见"。每天 50 次,免费。</p>
+          <h2>左边发火，右边收场</h2>
+          <p>输入你的职场怨气，AI 把它们翻译成得体、专业、让人舒服的回复。</p>
         </div>
 
+        {/* 场景选择器 */}
         <div className="scene-picker animate-fade-up delay-2">
           {SCENES.map(s => (
             <button
               key={s.id}
               className={`scene-chip ${scene === s.id ? 'active' : ''}`}
-              onClick={() => loadExample(s)}
+              onClick={() => { setScene(s.id); setHardText(exampleTexts[s.id] || ''); setSoftText(''); setRated(false); setRating(0); }}
               title={s.hint}
             >{s.label}</button>
           ))}
         </div>
 
         <div className="split animate-scale-in delay-3">
+          {/* 左侧：吐槽 */}
           <div className="split-left">
             <h3>硬话</h3>
             <textarea
               value={hardText}
               onChange={e => setHardText(e.target.value)}
-              placeholder="把你想说的都倒出来…脏话、吐槽、阴阳怪气,随便。"
+              placeholder="比如：领导总让我加班到很晚，还觉得理所应当..."
+              style={{
+                border: hardText ? '2px solid var(--brand-orange)' : 'none',
+                borderRadius: '8px',
+                padding: '4px',
+                transition: 'border-color 0.2s'
+              }}
             />
+            <div className={`char-count ${charCountClass}`}>
+              {hardText.length} / {MAX_CHARS}
+            </div>
             <div className="toolbar">
               {!recording ? (
                 <button className="rec-btn" onClick={startVoice} title="语音录入">
@@ -298,64 +294,68 @@ export default function Home() {
               )}
               <button
                 ref={translateBtnRef}
-                className={`translate-btn ${loading ? 'translating' : ''}`}
+                className={`translate-btn ${loading ? 'loading' : ''}`}
                 onClick={translate}
-                disabled={loading || !hardText.trim()}
+                disabled={loading || !hardText.trim() || hardText.length > MAX_CHARS}
               >
-                {loading ? 'AI 在想…' : '翻译成体面话 →'}
+                {loading ? '⚡ 翻译中…' : '翻译成体面话 →'}
               </button>
             </div>
           </div>
 
+          {/* 右侧：软话 */}
           <div className="split-right">
             <h3>软话</h3>
-            <div className={`result ${!softText && !loading ? '' : 'result-reveal'} ${copyFlash ? 'copy-flash' : ''}`}
-                 style={{ whiteSpace: 'pre-wrap', minHeight: 120 }}>
+            <div
+              className={`result ${softText ? 'result-reveal' : ''}`}
+              style={{ whiteSpace: 'pre-wrap', minHeight: 120 }}
+            >
               {typedSoft}
               {softText && !typingDone && <span className="typewriter-cursor" />}
             </div>
             <div className="toolbar">
               <button
-                className="translate-btn"
-                onClick={copyResult}
+                className="copy-btn"
+                onClick={() => {
+                  navigator.clipboard.writeText(softText)
+                  setErrMsg('已复制，直接粘贴就行 ✦')
+                  setTimeout(() => setErrMsg(null), 2500)
+                }}
                 disabled={!softText}
               >📋 复制</button>
+              <button
+                className="translate-btn"
+                onClick={translate}
+                disabled={loading || !hardText.trim()}
+                style={{ flex: '0 0 auto', padding: '13px 18px' }}
+              >🔄 重新翻译</button>
             </div>
 
             {softText && recordId && !rated && (
               <div className="rating">
                 <span className="rating-label">这个翻译贴不贴?</span>
                 <div className="stars">
-                  {[1, 2, 3, 4, 5].map(n => (
-                    <button
-                      key={n}
-                      className={`star ${n <= rating ? 'active' : ''}`}
-                      onClick={() => submitRating(n)}
-                    >★</button>
+                  {[1,2,3,4,5].map(n => (
+                    <button key={n} className={`star ${n <= rating ? 'active' : ''}`}
+                      onClick={() => submitRating(n)}>★</button>
                   ))}
                 </div>
-                <span className="rating-hint">评分帮 AI 学得更懂你</span>
+                <span className="rating-hint">帮 AI 学得更懂你</span>
               </div>
             )}
-            {rated && (
-              <div className="rating-thanks">谢谢评分!这会让下一个翻译更精准 ✨</div>
-            )}
+            {rated && <div className="rating-thanks">谢谢评分！这会让下一个翻译更精准 ✨</div>}
 
             {loading && !softText && (
               <div className="result loading">
-                <span className="typing-dot"></span>
-                <span className="typing-dot"></span>
-                <span className="typing-dot"></span>
-                <span style={{ marginLeft: 8 }}>AI 在琢磨怎么帮你说得体面…</span>
+                <span className="typing-dot"/><span className="typing-dot"/><span className="typing-dot"/>
+                <span style={{marginLeft: 8}}>AI 在琢磨怎么帮你说得体面…</span>
               </div>
             )}
             {errMsg && (
-              <div className="result" style={{ borderLeftColor: '#ff8800', background: '#fff8e8' }}>
-                {errMsg}
-              </div>
+              <div className="result" style={{ borderLeftColor: '#ff8800', background: '#fff8e8' }}>{errMsg}</div>
             )}
             {quota && (
-              <div style={{ marginTop: 16, fontSize: 12, color: '#999' }}>
+              <div style={{ marginTop: 14, fontSize: 12, color: 'var(--text-secondary)' }}>
                 今日已用 {quota.used} / {quota.limit} 次
               </div>
             )}
@@ -363,130 +363,57 @@ export default function Home() {
         </div>
       </section>
 
-      {/* PAIN POINTS */}
-      <section className="pain scroll-reveal" id="scenes">
-        <div className="pain-head scroll-reveal">
-          <h2>职场人<span className="red"> 8 大想怼</span>现场</h2>
-          <p>这些场景,谁没遇到几次?你心里骂了一万句,但最后还是微笑点头。</p>
+      {/* 功能特色 */}
+      <section className="features scroll-reveal" id="features">
+        <div className="features-head">
+          <h2>为什么用硬话软说</h2>
         </div>
-        <div className="cards">
-          {[
-            { icon: '👑', title: '霸道专制的领导', body: '抢功、PUA、无偿加班、开会骂人、把你的方案改成他的还让你汇报。', ex: '"我 tm 加班到 11 点,周一早会他说方案是他主导的。"' },
-            { icon: '🫠', title: '甩锅甩到飞起的同事', body: '把活推给你,出问题就装傻,在群里@你"麻烦核对一下"。', ex: '"数据是他给的源表错了,他让我背锅?"' },
-            { icon: '🤑', title: '异想天开的客户', body: '预算 5000 要做淘宝+抖音+小红书+私域+AI 全部。', ex: '"我:???"' },
-            { icon: '📋', title: '话术流 HR', body: '"公司业务调整,你的岗位不太合适,建议主动离职。"', ex: '"我笑了。"' },
-            { icon: '📈', title: '晋升答辩压力', body: '跟了半年的项目想争取升职加薪,又怕被领导觉得"太急"。', ex: '"怎么开口才不显得我在要挟?"' },
-            { icon: '💰', title: '薪资谈判', body: '对方开的比预期低 30%,HR 说"这是最优方案了"。', ex: '"不知道还能不能谈,怕谈了 offer 飞。"' },
-          ].map((card, i) => (
-            <div key={i} className={`card scroll-reveal delay-${(i % 3) + 1}`}>
-              <div className="card-icon">{card.icon}</div>
-              <h4>{card.title}</h4>
-              <p>{card.body}</p>
-              <div className="example">"{card.ex}"</div>
+        <div className="features-grid">
+          {FEATURES.map((f, i) => (
+            <div key={i} className={`feature-card scroll-reveal delay-${i+1}`}>
+              <div className="feature-icon">{f.icon}</div>
+              <h4>{f.title}</h4>
+              <p>{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* HOW */}
-      <section className="how scroll-reveal" id="how">
-        <div className="how-head">
-          <div className="kicker">怎么用</div>
-          <h2>4 步,搞定一次"想怼"</h2>
-          <p>从情绪倒出到体面发言,一杯咖啡的时间。</p>
-        </div>
-        <div className="steps">
-          {[
-            { num: '01', title: '选场景', desc: '领导/同事/客户/HR,选个最贴你心塞的分类。' },
-            { num: '02', title: '把火发出来', desc: '录音或打字都行。脏话、吐槽、阴阳怪气,通通收下。' },
-            { num: '03', title: 'AI 翻译', desc: '听懂你的情绪,把"想说滚"翻译成"我保留意见"。' },
-            { num: '04', title: '评分 + 直接用', desc: '给翻译打分帮 AI 学,再一键复制粘贴去用。' },
-          ].map((s, i) => (
-            <div key={i} className={`step scroll-reveal delay-${i + 1}`}>
-              <div className="step-num">{s.num}</div>
-              <h4>{s.title}</h4>
-              <p>{s.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* CASES */}
+      {/* 案例展示 */}
       <section className="cases scroll-reveal" id="cases">
-        <div className="cases-head scroll-reveal">
-          <h2>看看<span style={{color: 'var(--hard-accent)'}}>硬话</span>怎么变<span style={{color: 'var(--soft-accent)'}}>软话</span></h2>
-          <p>真实场景示例,左侧是你心里想的,右侧是 AI 给你的。</p>
+        <div className="cases-head">
+          <h2>看看别人怎么说</h2>
+          <p>真实场景示例，左边是你心里想的，右边是 AI 给你的。</p>
         </div>
-        <div className="case-layout">
-          <div className="case-grid">
-            {CASES.map((c, i) => (
-              <div key={i} className={`case scroll-reveal delay-${i + 1}`}>
-                <div className="case-hard">{c.hard}</div>
-                <div className="arrow">→</div>
-                <div>
-                  <div className="case-soft">{c.soft}</div>
-                  <div className="case-meta">{c.scene} · {c.meta}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* 梗图轮播区 */}
-          <div className="meme-carousel scroll-reveal delay-2">
-            <div className="meme-gallery" onClick={() => setMemeIdx(i => (i + 1) % MEMES.length)} title="点击换下一张">
-              <div className="meme-track" style={{ transform: `translateX(-${memeIdx * 100}%)` }}>
-                {MEMES.map((m, i) => (
-                  <img key={i} src={m.src} alt="梗图" className="meme-img" />
-                ))}
-              </div>
-              <div className="meme-counter">{memeIdx + 1} / {MEMES.length}</div>
-            </div>
-            <div className="meme-dots">
-              {MEMES.map((_, i) => (
-                <span key={i} className={`meme-dot ${i === memeIdx ? 'active' : ''}`} />
-              ))}
-            </div>
-            <div className="meme-tip">点击图片换一张 🫡</div>
-          </div>
-        </div>
-      </section>
-
-      {/* 数据飞轮 */}
-      <section className="wheel scroll-reveal">
-        <div className="wheel-head">
-          <div className="kicker">为什么越来越准</div>
-          <h2>数据飞轮</h2>
-        </div>
-        <div className="wheel-flow">
-          {['你吐槽', 'AI 翻译', '你评分', '语料沉淀', '下次更准'].map((node, i) => (
-            <div key={i}>
-              <div className={`wheel-node ${i === 1 || i === 3 ? 'highlight' : ''}`}>{node}</div>
-              {i < 4 && <div className="wheel-arrow">→</div>}
+        <div className="case-grid">
+          {CASES.map((c, i) => (
+            <div key={i} className={`case-card scroll-reveal delay-${i+1}`}>
+              <div className="case-label">{c.scene}</div>
+              <div className="case-hard">{c.hard}</div>
+              <div className="case-arrow">↓</div>
+              <div className="case-soft">{c.soft}</div>
+              <div className="case-tag">{c.tag}</div>
             </div>
           ))}
         </div>
-        <p className="wheel-note">每一条吐槽 + 评分,都在帮下一个职场人翻译得更体面。</p>
       </section>
 
       {/* CTA */}
       <section className="cta scroll-reveal">
-        <h2>让每个想说<span className="red">"滚"</span>的职场人,<br/>都能体面地说出<span className="red">"我保留意见"</span>。</h2>
-        <p>免费,免注册,录音打字都行。心情不好的时候,来一句。</p>
-        <a href="#demo" className="cta-btn">来,先骂一句 →</a>
+        <h2>让每个想说<span className="accent">"滚"</span>的职场人，<br/>都能体面地说出<span className="accent">"我保留意见"</span>。</h2>
+        <p>免费使用 · 无需注册 · 5秒完成</p>
+        <a href="#demo" className="cta-btn">来，先骂一句 →</a>
       </section>
 
       <footer>
-        <div style={{ marginBottom: 12 }}>
-          <span style={{ color: '#999' }}>硬话软说</span> · 职场嘴替 AI · 一个不让你憋出内伤的小工具
-        </div>
+        <div style={{ marginBottom: 12 }}>硬话软说 · 职场嘴替 AI</div>
         <div>
           <a href="#">关于</a>
           <a href="#">隐私</a>
           <a href="#">联系</a>
-          <a href="#">微信公众号:硬话软说</a>
         </div>
-        <div style={{ marginTop: 16, fontSize: 12, opacity: 0.5 }}>
-          © 2026 · 仅供职场情绪宣泄使用,AI 翻译结果仅供参考
+        <div style={{ marginTop: 16, fontSize: 12, opacity: 0.4 }}>
+          © 2026 · AI 翻译结果仅供参考
         </div>
       </footer>
     </main>
