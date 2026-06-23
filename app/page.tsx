@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import './animations.css'
 
 const SCENES = [
   { id: 'boss', label: '霸道领导', hint: '领导让你无偿加班、抢功、PUA' },
@@ -13,7 +14,6 @@ const SCENES = [
   { id: 'general', label: '随便聊聊', hint: '不想分类,先把情绪倒出来' }
 ]
 
-// 梗图库 - 点击可轮播
 const MEMES = [
   { src: '/memes/meme-01.png', hint: '领导卖力画饼，而我只想减肥' },
   { src: '/memes/meme-02.png', hint: '会开完了，但问题没解决' },
@@ -46,6 +46,65 @@ const CASES = [
   }
 ]
 
+// ---- 粒子效果 ----
+const CONFETTI_COLORS = ['#FF6B35', '#4ECDC4', '#FFE66D', '#FF6B6B', '#45B7D1', '#96CEB4']
+const CONFETTI_SHAPES = ['■', '●', '▲', '✦']
+
+function triggerConfetti(btnEl: HTMLElement) {
+  const rect = btnEl.getBoundingClientRect()
+  const baseX = rect.left + rect.width / 2
+  for (let i = 0; i < 22; i++) {
+    const el = document.createElement('div')
+    el.style.position = 'fixed'
+    el.style.left = (baseX + (Math.random() - 0.5) * 120) + 'px'
+    el.style.top = (rect.top + window.scrollY) + 'px'
+    el.style.zIndex = '9999'
+    el.style.pointerEvents = 'none'
+    el.style.fontSize = (Math.random() * 10 + 8) + 'px'
+    el.style.color = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]
+    el.style.animation = `confettiFall ${Math.random() * 0.8 + 0.9}s cubic-bezier(0.25,0.46,0.45,0.94) forwards`
+    el.textContent = CONFETTI_SHAPES[Math.floor(Math.random() * CONFETTI_SHAPES.length)]
+    document.body.appendChild(el)
+    setTimeout(() => el.remove(), 2000)
+  }
+}
+
+// 打字机 hook
+function useTypewriter(text: string, speed = 28) {
+  const [displayed, setDisplayed] = useState('')
+  const [done, setDone] = useState(false)
+  useEffect(() => {
+    if (!text) { setDisplayed(''); setDone(false); return }
+    setDisplayed(''); setDone(false)
+    let i = 0
+    const tick = () => {
+      if (i < text.length) {
+        setDisplayed(text.slice(0, i + 1))
+        i++
+        setTimeout(tick, speed)
+      } else {
+        setDone(true)
+      }
+    }
+    const id = setTimeout(tick, speed * 3)
+    return () => clearTimeout(id)
+  }, [text, speed])
+  return { displayed, done }
+}
+
+// 滚动入场 hook
+function useScrollReveal() {
+  useEffect(() => {
+    const els = document.querySelectorAll<HTMLElement>('.scroll-reveal')
+    const obs = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('revealed') }),
+      { threshold: 0.12 }
+    )
+    els.forEach(el => obs.observe(el))
+    return () => obs.disconnect()
+  }, [])
+}
+
 export default function Home() {
   const [scene, setScene] = useState('boss')
   const [hardText, setHardText] = useState('')
@@ -58,8 +117,24 @@ export default function Home() {
   const [rating, setRating] = useState(0)
   const [rated, setRated] = useState(false)
   const [memeIdx, setMemeIdx] = useState(0)
-  const [memeAnimating, setMemeAnimating] = useState(false)
+  const [firstSuccess, setFirstSuccess] = useState(false)
+  const [copyFlash, setCopyFlash] = useState(false)
   const speechRef = useRef<any>(null)
+  const translateBtnRef = useRef<HTMLButtonElement>(null)
+  const { displayed: typedSoft, done: typingDone } = useTypewriter(softText)
+
+  useScrollReveal()
+
+  // 导航滚动阴影
+  useEffect(() => {
+    const nav = document.querySelector('.nav') as HTMLElement
+    const onScroll = () => {
+      if (window.scrollY > 20) nav?.classList.add('scrolled')
+      else nav?.classList.remove('scrolled')
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   function startVoice() {
     const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
@@ -74,49 +149,19 @@ export default function Home() {
     r.continuous = false
     r.interimResults = true
     r.onresult = (e: any) => {
-      const transcript = Array.from(e.results)
-        .map((t: any) => t[0].transcript)
-        .join('')
+      const transcript = Array.from(e.results).map((t: any) => t[0].transcript).join('')
       setHardText(transcript)
     }
-    r.onerror = () => {
-      setRecording(false)
-    }
+    r.onerror = () => setRecording(false)
     r.onend = () => {
       setRecording(false)
-      // 用最终识别结果触发翻译
-      if (hardText.trim()) {
-        setTimeout(() => translate(), 100)
-      }
+      if (hardText.trim()) setTimeout(() => translate(), 100)
     }
     r.start()
     setRecording(true)
   }
 
-  function stopVoice() {
-    speechRef.current?.stop()
-    setRecording(false)
-  }
-
-  async function sendAudio(blob: Blob) {
-    setLoading(true); setErrMsg(null)
-    try {
-      const fd = new FormData()
-      fd.append('audio', blob, 'rec.webm')
-      fd.append('scene', scene)
-      const res = await fetch('/api/translate', { method: 'POST', body: fd })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || '请求失败')
-      setHardText(data.transcript || '')
-      setSoftText(data.reply || '')
-      if (data.quota) setQuota(data.quota)
-      if (data.id) setRecordId(data.id)
-    } catch (e: any) {
-      setErrMsg(e.message || '出错了,稍后再试')
-    } finally {
-      setLoading(false)
-    }
-  }
+  function stopVoice() { speechRef.current?.stop(); setRecording(false) }
 
   async function translate() {
     if (!hardText.trim()) return
@@ -132,6 +177,13 @@ export default function Home() {
       setSoftText(data.reply || '')
       if (data.quota) setQuota(data.quota)
       if (data.id) setRecordId(data.id)
+      // 首次成功 → 粒子庆祝
+      if (!firstSuccess && data.reply) {
+        setFirstSuccess(true)
+        setTimeout(() => {
+          translateBtnRef.current && triggerConfetti(translateBtnRef.current)
+        }, 600)
+      }
     } catch (e: any) {
       setErrMsg(e.message || '出错了,稍后再试')
     } finally {
@@ -149,9 +201,14 @@ export default function Home() {
         body: JSON.stringify({ id: recordId, rating: r })
       })
       setRated(true)
-    } catch (e) {
-      // 静默失败,用户不需要知道
-    }
+    } catch (_) {}
+  }
+
+  function copyResult() {
+    navigator.clipboard.writeText(softText)
+    setCopyFlash(true)
+    setErrMsg('已复制,直接粘贴就行 ✦')
+    setTimeout(() => { setErrMsg(null); setCopyFlash(false) }, 2500)
   }
 
   function loadExample(s: typeof SCENES[number]) {
@@ -189,28 +246,28 @@ export default function Home() {
       {/* HERO */}
       <section className="hero">
         <div className="hero-hard">
-          <span className="tag">硬话</span>
-          <h1>想说<span className="accent">滚</span>。<br/>憋不住。</h1>
-          <p>工作里那些想怼不敢怼的瞬间,先来这里倒出来。<br/>脏话、吐槽、阴阳怪气,随便说。</p>
-          <a href="#demo" className="hero-cta">把火发出来 →</a>
+          <span className="tag animate-fade-up">硬话</span>
+          <h1 className="animate-fade-up delay-1">想说<span className="accent">滚</span>。<br/>憋不住。</h1>
+          <p className="animate-fade-up delay-2">工作里那些想怼不敢怼的瞬间,先来这里倒出来。<br/>脏话、吐槽、阴阳怪气,随便说。</p>
+          <a href="#demo" className="hero-cta animate-fade-up delay-3">把火发出来 →</a>
         </div>
         <div className="hero-soft">
-          <span className="tag">软话</span>
-          <h1>对外,<br/>说得<span className="accent">体面</span>。</h1>
-          <p>AI 听懂你的情绪,翻译成你该说的样子。<br/>不卑不亢,有理有面,成年人的体面。</p>
-          <a href="#demo" className="hero-cta">看怎么翻译 →</a>
+          <span className="tag animate-fade-up">软话</span>
+          <h1 className="animate-fade-up delay-1">对外,<br/>说得<span className="accent">体面</span>。</h1>
+          <p className="animate-fade-up delay-2">AI 听懂你的情绪,翻译成你该说的样子。<br/>不卑不亢,有理有面,成年人的体面。</p>
+          <a href="#demo" className="hero-cta animate-fade-up delay-3">看怎么翻译 →</a>
         </div>
       </section>
 
       {/* DEMO */}
-      <section className="demo" id="demo">
-        <div className="demo-head">
+      <section className="demo scroll-reveal" id="demo">
+        <div className="demo-head animate-fade-up">
           <div className="kicker">现在就试</div>
           <h2>左边发火,右边收场</h2>
           <p>录音或打字,AI 帮你把"想说滚"翻译成"我保留意见"。每天 50 次,免费。</p>
         </div>
 
-        <div className="scene-picker">
+        <div className="scene-picker animate-fade-up delay-2">
           {SCENES.map(s => (
             <button
               key={s.id}
@@ -221,7 +278,7 @@ export default function Home() {
           ))}
         </div>
 
-        <div className="split">
+        <div className="split animate-scale-in delay-3">
           <div className="split-left">
             <h3>硬话</h3>
             <textarea
@@ -240,7 +297,8 @@ export default function Home() {
                 </button>
               )}
               <button
-                className="translate-btn"
+                ref={translateBtnRef}
+                className={`translate-btn ${loading ? 'translating' : ''}`}
                 onClick={translate}
                 disabled={loading || !hardText.trim()}
               >
@@ -251,24 +309,19 @@ export default function Home() {
 
           <div className="split-right">
             <h3>软话</h3>
-            <textarea
-              value={softText}
-              onChange={e => setSoftText(e.target.value)}
-              placeholder="你该说的样子,会出现在这里。"
-            />
+            <div className={`result ${!softText && !loading ? '' : 'result-reveal'} ${copyFlash ? 'copy-flash' : ''}`}
+                 style={{ whiteSpace: 'pre-wrap', minHeight: 120 }}>
+              {typedSoft}
+              {softText && !typingDone && <span className="typewriter-cursor" />}
+            </div>
             <div className="toolbar">
               <button
                 className="translate-btn"
-                onClick={() => {
-                  navigator.clipboard.writeText(softText)
-                  setErrMsg('已复制,直接粘贴就行 ✦')
-                  setTimeout(() => setErrMsg(null), 2500)
-                }}
+                onClick={copyResult}
                 disabled={!softText}
               >📋 复制</button>
             </div>
 
-            {/* 评分交互 */}
             {softText && recordId && !rated && (
               <div className="rating">
                 <span className="rating-label">这个翻译贴不贴?</span>
@@ -278,7 +331,6 @@ export default function Home() {
                       key={n}
                       className={`star ${n <= rating ? 'active' : ''}`}
                       onClick={() => submitRating(n)}
-                      aria-label={`${n} 星`}
                     >★</button>
                   ))}
                 </div>
@@ -312,92 +364,63 @@ export default function Home() {
       </section>
 
       {/* PAIN POINTS */}
-      <section className="pain" id="scenes">
-        <div className="pain-head">
+      <section className="pain scroll-reveal" id="scenes">
+        <div className="pain-head scroll-reveal">
           <h2>职场人<span className="red"> 8 大想怼</span>现场</h2>
           <p>这些场景,谁没遇到几次?你心里骂了一万句,但最后还是微笑点头。</p>
         </div>
         <div className="cards">
-          <div className="card">
-            <div className="card-icon">👑</div>
-            <h4>霸道专制的领导</h4>
-            <p>抢功、PUA、无偿加班、开会骂人、把你的方案改成他的还让你汇报。</p>
-            <div className="example">"我 tm 加班到 11 点,周一早会他说方案是他主导的。"</div>
-          </div>
-          <div className="card">
-            <div className="card-icon">🫠</div>
-            <h4>甩锅甩到飞起的同事</h4>
-            <p>把活推给你,出问题就装傻,在群里@你"麻烦核对一下"。</p>
-            <div className="example">"数据是他给的源表错了,他让我背锅?"</div>
-          </div>
-          <div className="card">
-            <div className="card-icon">🤑</div>
-            <h4>异想天开的客户</h4>
-            <p>预算 5000 要做淘宝+抖音+小红书+私域+AI 全部。</p>
-            <div className="example">"我:???"</div>
-          </div>
-          <div className="card">
-            <div className="card-icon">📋</div>
-            <h4>话术流 HR</h4>
-            <p>"公司业务调整,你的岗位不太合适,建议主动离职。"</p>
-            <div className="example">"我笑了。"</div>
-          </div>
-          <div className="card">
-            <div className="card-icon">📈</div>
-            <h4>晋升答辩压力</h4>
-            <p>跟了半年的项目想争取升职加薪,又怕被领导觉得"太急"。</p>
-            <div className="example">"怎么开口才不显得我在要挟?"</div>
-          </div>
-          <div className="card">
-            <div className="card-icon">💰</div>
-            <h4>薪资谈判</h4>
-            <p>对方开的比预期低 30%,HR 说"这是最优方案了"。</p>
-            <div className="example">"不知道还能不能谈,怕谈了 offer 飞。"</div>
-          </div>
+          {[
+            { icon: '👑', title: '霸道专制的领导', body: '抢功、PUA、无偿加班、开会骂人、把你的方案改成他的还让你汇报。', ex: '"我 tm 加班到 11 点,周一早会他说方案是他主导的。"' },
+            { icon: '🫠', title: '甩锅甩到飞起的同事', body: '把活推给你,出问题就装傻,在群里@你"麻烦核对一下"。', ex: '"数据是他给的源表错了,他让我背锅?"' },
+            { icon: '🤑', title: '异想天开的客户', body: '预算 5000 要做淘宝+抖音+小红书+私域+AI 全部。', ex: '"我:???"' },
+            { icon: '📋', title: '话术流 HR', body: '"公司业务调整,你的岗位不太合适,建议主动离职。"', ex: '"我笑了。"' },
+            { icon: '📈', title: '晋升答辩压力', body: '跟了半年的项目想争取升职加薪,又怕被领导觉得"太急"。', ex: '"怎么开口才不显得我在要挟?"' },
+            { icon: '💰', title: '薪资谈判', body: '对方开的比预期低 30%,HR 说"这是最优方案了"。', ex: '"不知道还能不能谈,怕谈了 offer 飞。"' },
+          ].map((card, i) => (
+            <div key={i} className={`card scroll-reveal delay-${(i % 3) + 1}`}>
+              <div className="card-icon">{card.icon}</div>
+              <h4>{card.title}</h4>
+              <p>{card.body}</p>
+              <div className="example">"{card.ex}"</div>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* HOW */}
-      <section className="how" id="how">
+      <section className="how scroll-reveal" id="how">
         <div className="how-head">
           <div className="kicker">怎么用</div>
           <h2>4 步,搞定一次"想怼"</h2>
           <p>从情绪倒出到体面发言,一杯咖啡的时间。</p>
         </div>
         <div className="steps">
-          <div className="step">
-            <div className="step-num">01</div>
-            <h4>选场景</h4>
-            <p>领导/同事/客户/HR,选个最贴你心塞的分类。</p>
-          </div>
-          <div className="step">
-            <div className="step-num">02</div>
-            <h4>把火发出来</h4>
-            <p>录音或打字都行。脏话、吐槽、阴阳怪气,通通收下。</p>
-          </div>
-          <div className="step">
-            <div className="step-num">03</div>
-            <h4>AI 翻译</h4>
-            <p>听懂你的情绪,把"想说滚"翻译成"我保留意见"。</p>
-          </div>
-          <div className="step">
-            <div className="step-num">04</div>
-            <h4>评分 + 直接用</h4>
-            <p>给翻译打分帮 AI 学,再一键复制粘贴去用。</p>
-          </div>
+          {[
+            { num: '01', title: '选场景', desc: '领导/同事/客户/HR,选个最贴你心塞的分类。' },
+            { num: '02', title: '把火发出来', desc: '录音或打字都行。脏话、吐槽、阴阳怪气,通通收下。' },
+            { num: '03', title: 'AI 翻译', desc: '听懂你的情绪,把"想说滚"翻译成"我保留意见"。' },
+            { num: '04', title: '评分 + 直接用', desc: '给翻译打分帮 AI 学,再一键复制粘贴去用。' },
+          ].map((s, i) => (
+            <div key={i} className={`step scroll-reveal delay-${i + 1}`}>
+              <div className="step-num">{s.num}</div>
+              <h4>{s.title}</h4>
+              <p>{s.desc}</p>
+            </div>
+          ))}
         </div>
       </section>
 
       {/* CASES */}
-      <section className="cases" id="cases">
-        <div className="cases-head">
+      <section className="cases scroll-reveal" id="cases">
+        <div className="cases-head scroll-reveal">
           <h2>看看<span style={{color: 'var(--hard-accent)'}}>硬话</span>怎么变<span style={{color: 'var(--soft-accent)'}}>软话</span></h2>
           <p>真实场景示例,左侧是你心里想的,右侧是 AI 给你的。</p>
         </div>
         <div className="case-layout">
           <div className="case-grid">
             {CASES.map((c, i) => (
-              <div key={i} className="case">
+              <div key={i} className={`case scroll-reveal delay-${i + 1}`}>
                 <div className="case-hard">{c.hard}</div>
                 <div className="arrow">→</div>
                 <div>
@@ -409,7 +432,7 @@ export default function Home() {
           </div>
 
           {/* 梗图轮播区 */}
-          <div className="meme-carousel">
+          <div className="meme-carousel scroll-reveal delay-2">
             <div className="meme-gallery" onClick={() => setMemeIdx(i => (i + 1) % MEMES.length)} title="点击换下一张">
               <div className="meme-track" style={{ transform: `translateX(-${memeIdx * 100}%)` }}>
                 {MEMES.map((m, i) => (
@@ -428,28 +451,25 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 数据飞轮说明 */}
-      <section className="wheel">
+      {/* 数据飞轮 */}
+      <section className="wheel scroll-reveal">
         <div className="wheel-head">
           <div className="kicker">为什么越来越准</div>
           <h2>数据飞轮</h2>
         </div>
         <div className="wheel-flow">
-          <div className="wheel-node">你吐槽</div>
-          <div className="wheel-arrow">→</div>
-          <div className="wheel-node highlight">AI 翻译</div>
-          <div className="wheel-arrow">→</div>
-          <div className="wheel-node">你评分</div>
-          <div className="wheel-arrow">→</div>
-          <div className="wheel-node highlight">语料沉淀</div>
-          <div className="wheel-arrow">→</div>
-          <div className="wheel-node">下次更准</div>
+          {['你吐槽', 'AI 翻译', '你评分', '语料沉淀', '下次更准'].map((node, i) => (
+            <div key={i}>
+              <div className={`wheel-node ${i === 1 || i === 3 ? 'highlight' : ''}`}>{node}</div>
+              {i < 4 && <div className="wheel-arrow">→</div>}
+            </div>
+          ))}
         </div>
         <p className="wheel-note">每一条吐槽 + 评分,都在帮下一个职场人翻译得更体面。</p>
       </section>
 
       {/* CTA */}
-      <section className="cta">
+      <section className="cta scroll-reveal">
         <h2>让每个想说<span className="red">"滚"</span>的职场人,<br/>都能体面地说出<span className="red">"我保留意见"</span>。</h2>
         <p>免费,免注册,录音打字都行。心情不好的时候,来一句。</p>
         <a href="#demo" className="cta-btn">来,先骂一句 →</a>
