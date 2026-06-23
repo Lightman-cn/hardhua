@@ -4,14 +4,14 @@ import { useState, useRef, useEffect } from 'react'
 import './animations.css'
 
 const SCENES = [
-  { id: 'boss', label: '霸道领导', hint: '领导让你无偿加班、抢功、PUA' },
-  { id: 'colleague', label: '甩锅同事', hint: '同事把活推给你、抢你功劳' },
-  { id: 'client', label: '异想天开客户', hint: '客户需求反复、预算离谱、临时加塞' },
-  { id: 'hr', label: 'HR 谈辞退', hint: 'HR 用话术逼你主动离职' },
-  { id: 'promotion', label: '晋升答辩', hint: '向领导汇报争取升职加薪' },
-  { id: 'salary', label: '谈薪水', hint: '面对 offer 谈判、涨薪请求' },
-  { id: 'partner', label: '难缠合作方', hint: '合作方拖延、扯皮、推卸' },
-  { id: 'general', label: '随便聊聊', hint: '不想分类,先把情绪倒出来' }
+  { id: 'boss', label: '霸道领导', hint: '领导让你无偿加班、抢功、PUA', memeIdx: 0 },
+  { id: 'colleague', label: '甩锅同事', hint: '同事把活推给你、抢你功劳', memeIdx: 4 },
+  { id: 'client', label: '异想天开客户', hint: '客户需求反复、预算离谱、临时加塞', memeIdx: 6 },
+  { id: 'hr', label: '话术流HR', hint: 'HR 用话术逼你主动离职', memeIdx: 7 },
+  { id: 'promotion', label: '晋升答辩', hint: '向领导汇报争取升职加薪', memeIdx: 3 },
+  { id: 'salary', label: '薪资谈判', hint: '面对 offer 谈判、涨薪请求', memeIdx: 3 },
+  { id: 'partner', label: '难缠合作方', hint: '合作方拖延、扯皮、推卸', memeIdx: 2 },
+  { id: 'general', label: '随便聊聊', hint: '不想分类,先把情绪倒出来', memeIdx: 5 },
 ]
 
 const MEMES = [
@@ -368,22 +368,38 @@ export default function Home() {
       <section className="pain scroll-reveal" id="scenes">
         <div className="pain-head scroll-reveal">
           <h2>职场人<span className="red"> 8 大想怼</span>现场</h2>
-          <p>这些场景,谁没遇到几次?你心里骂了一万句,但最后还是微笑点头。</p>
+          <p>哪张图是你现在不吐不快的心情？点进去，把火发出来。</p>
         </div>
         <div className="cards">
-          {[
-            { icon: '👑', title: '霸道专制的领导', body: '抢功、PUA、无偿加班、开会骂人、把你的方案改成他的还让你汇报。', ex: '"我 tm 加班到 11 点,周一早会他说方案是他主导的。"' },
-            { icon: '🫠', title: '甩锅甩到飞起的同事', body: '把活推给你,出问题就装傻,在群里@你"麻烦核对一下"。', ex: '"数据是他给的源表错了,他让我背锅?"' },
-            { icon: '🤑', title: '异想天开的客户', body: '预算 5000 要做淘宝+抖音+小红书+私域+AI 全部。', ex: '"我:???"' },
-            { icon: '📋', title: '话术流 HR', body: '"公司业务调整,你的岗位不太合适,建议主动离职。"', ex: '"我笑了。"' },
-            { icon: '📈', title: '晋升答辩压力', body: '跟了半年的项目想争取升职加薪,又怕被领导觉得"太急"。', ex: '"怎么开口才不显得我在要挟?"' },
-            { icon: '💰', title: '薪资谈判', body: '对方开的比预期低 30%,HR 说"这是最优方案了"。', ex: '"不知道还能不能谈,怕谈了 offer 飞。"' },
-          ].map((card, i) => (
-            <div key={i} className={`card scroll-reveal delay-${(i % 3) + 1}`}>
-              <div className="card-icon">{card.icon}</div>
-              <h4>{card.title}</h4>
-              <p>{card.body}</p>
-              <div className="example">"{card.ex}"</div>
+          {SCENES.map((s, i) => (
+            <div
+              key={s.id}
+              className={`card scroll-reveal delay-${(i % 4) + 1}`}
+              onClick={() => {
+                setScene(s.id)
+                const ex: Record<string, string> = {
+                  boss: '我 tm 加班到 11 点,周一早会他当着全组说"上周那个方案是 XX 主导的,我只是给点建议"。要点脸吗?',
+                  colleague: '数据出问题明明是他给的源表错了,他在群里@我说"麻烦 XX 把数据再核对一下哈",意思让我背锅?',
+                  client: '预算 5000 要做个淘宝+抖音+小红书三端 App,还要 AI 推荐,还要私域运营全包。我:???',
+                  hr: 'HR 说"公司近期业务调整,你的岗位不太合适,建议你主动提离职,这样对大家都体面",我笑了。',
+                  promotion: '我跟了半年的项目上线了,想跟领导聊聊升职加薪,但又怕他觉得我"太急"。',
+                  salary: '对方开的薪资比预期低 30%,HR 说"这是我们能给到的最优方案了",我不知道怎么谈。',
+                  partner: '合作方拖了 3 个月没付尾款,微信上问就是"在走流程",我 tm 已经在朋友圈看到他们团建了。',
+                  general: ''
+                }
+                setHardText(ex[s.id] || ''); setSoftText(''); setRating(0); setRated(false)
+                document.getElementById('demo')?.scrollIntoView({ behavior: 'smooth' })
+              }}
+            >
+              <div className="card-meme">
+                <img src={MEMES[s.memeIdx].src} alt={s.hint} loading="lazy" />
+              </div>
+              <div className="card-body">
+                <div className="card-icon">{s.label.split(' ')[0]}</div>
+                <h4>{s.label.split(' ').slice(1).join(' ')}</h4>
+                <p>{s.hint}</p>
+                <div className="example">"{MEMES[s.memeIdx].hint}"</div>
+              </div>
             </div>
           ))}
         </div>
@@ -415,21 +431,23 @@ export default function Home() {
       {/* CASES */}
       <section className="cases scroll-reveal" id="cases">
         <div className="cases-head scroll-reveal">
-          <h2>看看<span style={{color: 'var(--hard-accent)'}}>硬话</span>怎么变<span style={{color: 'var(--soft-accent)'}}>软话</span></h2>
-          <p>真实场景示例,左侧是你心里想的,右侧是 AI 给你的。</p>
+          <h2>看看<span style={{color: 'var(--soft-accent)'}}>硬话</span>怎么变<span style={{color: 'var(--hard-accent)'}}>软话</span></h2>
+          <p>真实场景示例，左边是你心里想的，右边是 AI 给你的。</p>
         </div>
-        <div className="case-grid">
-          {CASES.map((c, i) => (
-            <div key={i} className={`case scroll-reveal delay-${i + 1}`}>
-              <div className="case-hard">{c.hard}</div>
-              <div className="arrow">→</div>
-              <div>
-                <div className="case-soft">{c.soft}</div>
-                <div className="case-meta">{c.scene} · {c.meta}</div>
-              </div>
+        {CASES.map((c, i) => (
+          <div key={i} className={`case-row scroll-reveal delay-${i + 1}`}>
+            <div className="case-hard">
+              <div className="case-hard-label">硬话 · 你想说的</div>
+              <div>{c.hard}</div>
             </div>
-          ))}
-        </div>
+            <div className="case-arrow-col">→</div>
+            <div className="case-soft">
+              <div className="case-soft-label">软话 · AI 替你说的</div>
+              <div>{c.soft}</div>
+              <div className="case-tag">{c.meta}</div>
+            </div>
+          </div>
+        ))}
       </section>
 
       {/* 梗图横向焦点视图 - 独立一行 */}
