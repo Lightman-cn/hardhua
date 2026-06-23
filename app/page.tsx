@@ -119,6 +119,7 @@ export default function Home() {
   const [memeIdx, setMemeIdx] = useState(0)
   const [firstSuccess, setFirstSuccess] = useState(false)
   const [copyFlash, setCopyFlash] = useState(false)
+  const [memeTransitioning, setMemeTransitioning] = useState(false)
   const speechRef = useRef<any>(null)
   const translateBtnRef = useRef<HTMLButtonElement>(null)
   const { displayed: typedSoft, done: typingDone } = useTypewriter(softText)
@@ -431,22 +432,40 @@ export default function Home() {
             ))}
           </div>
 
-          {/* 梗图轮播区 */}
-          <div className="meme-carousel scroll-reveal delay-2">
-            <div className="meme-gallery" onClick={() => setMemeIdx(i => (i + 1) % MEMES.length)} title="点击换下一张">
-              <div className="meme-track" style={{ transform: `translateX(-${memeIdx * 100}%)` }}>
-                {MEMES.map((m, i) => (
-                  <img key={i} src={m.src} alt="梗图" className="meme-img" />
-                ))}
-              </div>
-              <div className="meme-counter">{memeIdx + 1} / {MEMES.length}</div>
-            </div>
-            <div className="meme-dots">
-              {MEMES.map((_, i) => (
-                <span key={i} className={`meme-dot ${i === memeIdx ? 'active' : ''}`} />
+          {/* 梗图横向焦点视图 */}
+          <div className="meme-spotlight scroll-reveal delay-2">
+            <div className="meme-spotlight-title">点击放大 · {memeIdx + 1}/{MEMES.length}</div>
+            <img
+              src={MEMES[memeIdx].src}
+              alt={MEMES[memeIdx].hint}
+              className={`meme-main-img ${memeTransitioning ? 'transitioning' : ''}`}
+              onClick={() => setMemeIdx(i => (i + 1) % MEMES.length)}
+            />
+            <div className="meme-hint">{MEMES[memeIdx].hint}</div>
+            <div className="meme-strip">
+              {MEMES.map((m, i) => (
+                <div
+                  key={i}
+                  className={`meme-thumb ${i === memeIdx ? 'active' : ''}`}
+                  onClick={() => {
+                    if (i !== memeIdx) {
+                      setMemeTransitioning(true)
+                      setTimeout(() => {
+                        setMemeIdx(i)
+                        setMemeTransitioning(false)
+                      }, 200)
+                    }
+                  }}
+                >
+                  <img src={m.src} alt={m.hint} />
+                </div>
               ))}
             </div>
-            <div className="meme-tip">点击图片换一张 🫡</div>
+            <div className="meme-indicator">
+              {MEMES.map((_, i) => (
+                <div key={i} className={`meme-pip ${i === memeIdx ? 'active' : ''}`} />
+              ))}
+            </div>
           </div>
         </div>
       </section>
