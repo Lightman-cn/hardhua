@@ -4,10 +4,9 @@
   "private": true,
   "description": "硬话软说 — 职场嘴替 AI",
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "next dev",
     "build": "next build",
-    "deploy": "vercel --prod",
-    "postbuild": "cp -r functions out/"
+    "postbuild": "cp -r functions out/ 2>/dev/null || true"
   },
   "dependencies": {
     "next": "^14.2.35",
