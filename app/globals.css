@@ -328,7 +328,7 @@ textarea {
   font-weight: 900; letter-spacing: -1.5px; margin-bottom: 16px;
 }
 .case-grid {
-  display: grid; grid-template-columns: repeat(2, 1fr);
+  display: grid; grid-template-columns: repeat(3, 1fr);
   gap: 24px; max-width: 1100px; margin: 0 auto;
 }
 .case {
@@ -351,16 +351,14 @@ textarea {
 .arrow { font-size: 24px; color: var(--soft-muted); }
 .case-meta { font-size: 12px; color: var(--soft-muted); margin-top: 10px; }
 
-/* ============ MEME SPOTLIGHT (横向焦点视图) ============ */
+/* ============ MEME SPOTLIGHT (横向焦点视图，独立一行) ============ */
 .meme-spotlight {
   background: var(--hard-bg);
   border-radius: 20px;
-  padding: 28px;
+  padding: 24px 28px;
   display: flex;
   flex-direction: column;
-  gap: 20px;
-  position: sticky;
-  top: 100px;
+  gap: 16px;
 }
 .meme-spotlight-title {
   font-size: 13px;
@@ -372,11 +370,14 @@ textarea {
 }
 .meme-main-img {
   width: 100%;
+  max-height: 380px;
+  object-fit: contain;
   border-radius: 14px;
   display: block;
   box-shadow: 0 8px 32px rgba(0,0,0,0.18);
   transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
   cursor: pointer;
+  background: #111;
 }
 .meme-main-img.transitioning {
   opacity: 0;
@@ -407,16 +408,16 @@ textarea {
   border: 2px solid transparent;
   transition: all 0.2s cubic-bezier(0.34,1.56,0.64,1);
   scroll-snap-align: start;
-  opacity: 0.6;
+  opacity: 0.55;
 }
 .meme-thumb:hover {
-  opacity: 0.9;
+  opacity: 0.85;
   transform: scale(1.08);
 }
 .meme-thumb.active {
   border-color: var(--hard-accent);
   opacity: 1;
-  transform: scale(1.1);
+  transform: scale(1.12);
   box-shadow: 0 4px 16px -4px rgba(255,45,45,0.4);
 }
 .meme-thumb img {
@@ -429,7 +430,6 @@ textarea {
   display: flex;
   justify-content: center;
   gap: 5px;
-  margin-top: 4px;
 }
 .meme-pip {
   width: 6px;
@@ -446,30 +446,13 @@ textarea {
   border-radius: 3px;
 }
 
-/* ============ CASE LAYOUT ============ */
-.case-layout {
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 40px;
-  max-width: 1200px;
-  margin: 0 auto;
-  align-items: start;
-}
-
-@media (max-width: 900px) {
-  .case-layout {
-    grid-template-columns: 1fr;
-  }
-  .meme-spotlight {
-    position: static;
-    order: -1;
-  }
-  .meme-strip {
-    flex-wrap: nowrap;
-  }
+@media (max-width: 768px) {
   .meme-thumb {
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
+  }
+  .meme-main-img {
+    max-height: 260px;
   }
 }
 

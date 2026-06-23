@@ -418,23 +418,29 @@ export default function Home() {
           <h2>看看<span style={{color: 'var(--hard-accent)'}}>硬话</span>怎么变<span style={{color: 'var(--soft-accent)'}}>软话</span></h2>
           <p>真实场景示例,左侧是你心里想的,右侧是 AI 给你的。</p>
         </div>
-        <div className="case-layout">
-          <div className="case-grid">
-            {CASES.map((c, i) => (
-              <div key={i} className={`case scroll-reveal delay-${i + 1}`}>
-                <div className="case-hard">{c.hard}</div>
-                <div className="arrow">→</div>
-                <div>
-                  <div className="case-soft">{c.soft}</div>
-                  <div className="case-meta">{c.scene} · {c.meta}</div>
-                </div>
+        <div className="case-grid">
+          {CASES.map((c, i) => (
+            <div key={i} className={`case scroll-reveal delay-${i + 1}`}>
+              <div className="case-hard">{c.hard}</div>
+              <div className="arrow">→</div>
+              <div>
+                <div className="case-soft">{c.soft}</div>
+                <div className="case-meta">{c.scene} · {c.meta}</div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
+      </section>
 
-          {/* 梗图横向焦点视图 */}
-          <div className="meme-spotlight scroll-reveal delay-2">
-            <div className="meme-spotlight-title">点击放大 · {memeIdx + 1}/{MEMES.length}</div>
+      {/* 梗图横向焦点视图 - 独立一行 */}
+      <section className="cases scroll-reveal" id="memes">
+        <div className="cases-head scroll-reveal">
+          <h2>梗图也是生产力 🫡</h2>
+          <p>点击放大，左右滑动翻页</p>
+        </div>
+        <div style={{ maxWidth: 800, margin: '0 auto' }}>
+          <div className="meme-spotlight">
+            <div className="meme-spotlight-title">{memeIdx + 1} / {MEMES.length} · 点击翻页</div>
             <img
               src={MEMES[memeIdx].src}
               alt={MEMES[memeIdx].hint}
