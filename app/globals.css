@@ -278,52 +278,81 @@ textarea {
   overflow: hidden;
   transition: all 0.28s var(--ease-out);
   cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.06);
 }
 .card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 20px 50px -20px rgba(0,0,0,0.18);
+  box-shadow: 0 20px 50px -20px rgba(0,0,0,0.25);
 }
-.card:hover .card-meme img {
-  transform: scale(1.08);
+.card:hover .card-meme-main img {
+  transform: scale(1.06);
 }
-.card-meme {
-  height: 140px;
+.card-meme-main {
+  height: 120px;
   overflow: hidden;
   background: #111;
+  position: relative;
 }
-.card-meme img {
+.card-meme-main img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.4s var(--ease-out);
 }
+.card-meme-hint {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  padding: 8px 10px 8px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.85));
+  font-size: 11px; color: rgba(255,255,255,0.85);
+  line-height: 1.4;
+}
+.card-meme-strip {
+  display: flex;
+  gap: 4px;
+  padding: 8px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  background: #111;
+}
+.card-meme-strip::-webkit-scrollbar { display: none; }
+.card-meme-thumb {
+  flex-shrink: 0;
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+  border: 2px solid transparent;
+  opacity: 0.5;
+  transition: all 0.2s var(--bounce);
+}
+.card-meme-thumb:hover { opacity: 0.8; transform: scale(1.1); }
+.card-meme-thumb.active {
+  border-color: var(--hard-accent);
+  opacity: 1;
+  transform: scale(1.15);
+}
+.card-meme-thumb img {
+  width: 100%; height: 100%; object-fit: cover;
+  display: block;
+}
 .card-body {
-  padding: 18px 16px 20px;
+  padding: 14px 14px 16px;
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
-.card-icon {
-  font-size: 22px;
-  margin-bottom: 4px;
-}
-.card h4 {
-  font-size: 15px; font-weight: 800;
-  color: var(--hard-fg);
-  margin-bottom: 4px;
-}
-.card p {
-  font-size: 12px; color: var(--hard-muted); line-height: 1.5;
-}
+.card-icon { font-size: 18px; margin-bottom: 2px; }
+.card h4 { font-size: 14px; font-weight: 800; color: var(--hard-fg); }
+.card p { font-size: 11px; color: var(--hard-muted); line-height: 1.5; }
 .card .example {
   margin-top: auto;
-  padding: 8px 10px;
-  background: rgba(255,45,45,0.08);
+  padding: 6px 8px;
+  background: rgba(255,45,45,0.1);
   border-left: 2px solid var(--hard-accent);
-  font-size: 11px; font-style: italic; color: #888;
-  border-radius: 0 6px 6px 0;
-  line-height: 1.5;
+  font-size: 10px; font-style: italic; color: #777;
+  border-radius: 0 4px 4px 0; line-height: 1.4;
 }
 
 /* ============ HOW IT WORKS ============ */
